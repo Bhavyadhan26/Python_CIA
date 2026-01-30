@@ -2,10 +2,8 @@ import streamlit as st
 import pandas as pd
 import geopandas as gpd
 import plotly.express as px
-import plotly.graph_objects as go
-import os
-import glob
-import re
+import matplotlib.pyplot as plt
+
 
 st.set_page_config(
     page_title="Silver Price Calculator",
@@ -109,12 +107,30 @@ fig=px.line(
 st.plotly_chart(fig, use_container_width=True)  
 
 
-st.header("Historical Silver Price Data- Statewise")
+st.header("Silver Sales Dashboard")
 df1 = pd.read_csv('state_wise_silver_purchased_kg.csv')
 st.subheader("State-wise Silver Purchases in India")
 st.dataframe(df1)
 
-# st.header("India State-wise Silver Purchases")
+st.subheader("India State-wise Map:Silver Purchases")
+
+# Load the shapefile and merge with silver purchase data
+gdf = gpd.read_file('archive/Indian_States.shp')
+gdf = gdf.merge(df1, left_on='st_nm', right_on='State', how='left')
+
+# Create the choropleth map
+fig, ax = plt.subplots(figsize=(12, 10))
+gdf.plot(column='Silver_Purchased_kg', ax=ax, legend=True, cmap='Blues',
+         edgecolor='k', legend_kwds={'label': 'Silver Purchased (kg)', 'orientation': 'vertical'})
+
+# # Add state names to the map
+# for idx, row in gdf.iterrows():
+#     centroid = row['geometry'].centroid
+#     ax.text(centroid.x, centroid.y, row['st_nm'], fontsize=8, ha='center', weight='bold')
+
+ax.set_title('India State-wise Silver Purchases (kg)')
+ax.axis('off')
+st.pyplot(fig)
 
 st.subheader("Top 5 States by Silver Purchases (kg)")
 top5 = df1.sort_values('Silver_Purchased_kg', ascending=False).head(5)
